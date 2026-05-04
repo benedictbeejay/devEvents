@@ -4,6 +4,9 @@ import "../public/globals.css";
 import { cn } from "@/lib/utils";
 import LightRays from "@/components/LightRays";
 import Navbar from "@/components/Navbar";
+import { Suspense } from "react";
+import { PostHogProvider } from "./providers";
+import PostHogPageView from "./PostHogPageView";
 
 const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -40,25 +43,30 @@ export default function RootLayout({
       )}
     >
       <body className="min-h-full flex flex-col">
-        <Navbar />
-        <div className="absolute z-[-1] inset-0 top-0 min-h-screen">
-          <LightRays
-            raysOrigin="top-center-offset"
-            raysColor="#5dfeca"
-            raysSpeed={0.8}
-            lightSpread={0.9}
-            rayLength={1.4}
-            followMouse={true}
-            mouseInfluence={0.05}
-            noiseAmount={0}
-            distortion={0.01}
-            // className="custom-rays"
-            pulsating={false}
-            fadeDistance={1}
-            saturation={1}
-          />
-        </div>
-        <main>{children}</main>
+        <PostHogProvider>
+          <Suspense fallback={null}>
+            <PostHogPageView />
+          </Suspense>
+          <Navbar />
+          <div className="absolute z-[-1] inset-0 top-0 min-h-screen">
+            <LightRays
+              raysOrigin="top-center-offset"
+              raysColor="#5dfeca"
+              raysSpeed={0.8}
+              lightSpread={0.9}
+              rayLength={1.4}
+              followMouse={true}
+              mouseInfluence={0.05}
+              noiseAmount={0}
+              distortion={0.01}
+              // className="custom-rays"
+              pulsating={false}
+              fadeDistance={1}
+              saturation={1}
+            />
+          </div>
+          <main>{children}</main>
+        </PostHogProvider>
       </body>
     </html>
   );
