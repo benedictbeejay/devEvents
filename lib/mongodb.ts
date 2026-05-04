@@ -34,6 +34,12 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
 
   // Create one in-flight promise and share it across concurrent requests.
   if (!cached.promise) {
+    // Validate MongoDB URI exists.
+    if (!MONGODB_URI) {
+      throw new Error(
+        "Please define the MONGODB_URI environment variable inside .env.local",
+      );
+    }
     const options: mongoose.ConnectOptions = {
       bufferCommands: false,
     };
