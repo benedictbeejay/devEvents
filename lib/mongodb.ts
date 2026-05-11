@@ -1,56 +1,63 @@
 import mongoose from "mongoose";
 
-const MONGODB_URI = process.env.MONGODB_URI as string;
-
-if (!MONGODB_URI) {
-  throw new Error("Missing MONGODB_URI environment variable.");
-}
-
+// Define the connection cache type
 type MongooseCache = {
   conn: typeof mongoose | null;
   promise: Promise<typeof mongoose> | null;
 };
 
-// Extend the global object type so we can safely store a cached connection in development.
-type GlobalWithMongoose = typeof globalThis & {
-  _mongoose?: MongooseCache;
-};
+// Extend the global object to include our mongoose cache
+declare global {
+  // eslint-disable-next-line no-var
+  var mongoose: MongooseCache | undefined;
+}
 
-const globalForMongoose = globalThis as GlobalWithMongoose;
+const MONGODB_URI = process.env.MONGODB_URI;
 
-// Reuse an existing cache if it exists, otherwise initialize one.
-const cached: MongooseCache = globalForMongoose._mongoose ?? {
-  conn: null,
-  promise: null,
-};
+// Initialize the cache on the global object to persist across hot reloads in development
+const cached: MongooseCache = global.mongoose || { conn: null, promise: null };
 
-globalForMongoose._mongoose = cached;
+if (!global.mongoose) {
+  global.mongoose = cached;
+}
 
-export async function connectToDatabase(): Promise<typeof mongoose> {
-  // Return the existing connection immediately when available.
+/**
+ * Establishes a connection to MongoDB using Mongoose.
+ * Caches the connection to prevent multiple connections during development hot reloads.
+ * @returns Promise resolving to the Mongoose instance
+ */
+async function connectDB(): Promise<typeof mongoose> {
+  // Return existing connection if available
   if (cached.conn) {
     return cached.conn;
   }
 
-  // Create one in-flight promise and share it across concurrent requests.
+  // Return existing connection promise if one is in progress
   if (!cached.promise) {
-    // Validate MongoDB URI exists.
+    // Validate MongoDB URI exists
     if (!MONGODB_URI) {
       throw new Error(
-        "Please define the MONGODB_URI environment variable inside .env.local",
+        "Missing MONGODB_URI. Define it in .env.local (e.g., mongodb+srv://...).",
       );
     }
-    const options: mongoose.ConnectOptions = {
-      bufferCommands: false,
+
+    const options = {
+      bufferCommands: false, // Disable Mongoose buffering
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, options);
+    // Create a new connection promise
+    cached.promise = mongoose
+      .connect(MONGODB_URI!, options)
+      .then((mongoose) => {
+        return mongoose;
+      });
   }
 
   try {
+    // Wait for the connection to establish
     cached.conn = await cached.promise;
   } catch (error) {
-    // Reset the promise so future calls can retry the connection.
+    // Reset promise on error to allow retry
     cached.promise = null;
     throw error;
   }
@@ -58,4 +65,4 @@ export async function connectToDatabase(): Promise<typeof mongoose> {
   return cached.conn;
 }
 
-export default connectToDatabase;
+export default connectDB;
