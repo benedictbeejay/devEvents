@@ -1,4 +1,5 @@
 import { HydratedDocument, Model, Schema, model, models } from "mongoose";
+import { Key } from "readline";
 
 const REQUIRED_STRING_FIELDS = [
   "title",
@@ -15,6 +16,7 @@ const REQUIRED_STRING_FIELDS = [
 ] as const;
 
 export interface IEvent {
+  id: Key | null | undefined;
   title: string;
   slug?: string;
   description: string;
@@ -46,13 +48,21 @@ const slugify = (value: string): string =>
     .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
 
+// const normalizeDate = (value: string): string => {
+//   const parsedDate = new Date(value);
+//   if (Number.isNaN(parsedDate.getTime())) {
+//     throw new Error("Event date must be a valid date string.");
+//   }
+
+//   return parsedDate.toISOString();
+// };
+
 const normalizeDate = (value: string): string => {
-  const parsedDate = new Date(value);
-  if (Number.isNaN(parsedDate.getTime())) {
-    throw new Error("Event date must be a valid date string.");
+  if (!value.trim()) {
+    throw new Error("Event date is required.");
   }
 
-  return parsedDate.toISOString();
+  return value.trim();
 };
 
 const normalizeTime = (value: string): string => {

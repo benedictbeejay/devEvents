@@ -1,5 +1,3 @@
-# devEvents - TODO
-
-- [x] Update MongoDB connection error handling to make `ESERVFAIL querySrv` actionable.
-- [x] (Optional) Add explicit instruction to use non-SRV URI if DNS/SRV fails.
-- [x] Re-run event creation to confirm improved error response.
+- [x] Inspect EventCard image rendering and identify source of empty string passed to next/image
+- [x] Guard EventCard poster <Image> so it is not rendered when image prop is empty
+- [x] Re-run/verify page loads without console warnings for missing src/alt
