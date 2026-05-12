@@ -1,12 +1,20 @@
-import { HydratedDocument, Model, Schema, Types, model, models } from 'mongoose';
+import {
+  HydratedDocument,
+  Model,
+  Schema,
+  Types,
+  model,
+  models,
+} from "mongoose";
 
-import { Event } from './event.model';
+import { Event } from "./event.model";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export interface IBooking {
   eventId: Types.ObjectId;
   email: string;
+  slug: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -17,9 +25,15 @@ const bookingSchema = new Schema<IBooking>(
   {
     eventId: {
       type: Schema.Types.ObjectId,
-      ref: 'Event',
+      ref: "Event",
       required: true,
     },
+
+    slug: {
+      type: String,
+      required: true,
+    },
+
     email: {
       type: String,
       required: true,
@@ -27,29 +41,30 @@ const bookingSchema = new Schema<IBooking>(
       lowercase: true,
       validate: {
         validator: (value: string): boolean => EMAIL_PATTERN.test(value),
-        message: 'Email must be a valid address.',
+        message: "Email must be a valid address.",
       },
     },
   },
   { timestamps: true },
 );
 
-bookingSchema.pre('save', async function () {
+bookingSchema.pre("save", async function () {
   // Validate references up front so bookings cannot target deleted/non-existent events.
-  if (this.isNew || this.isModified('eventId')) {
+  if (this.isNew || this.isModified("eventId")) {
     const eventExists = await Event.exists({ _id: this.eventId });
     if (!eventExists) {
-      throw new Error('Booking eventId does not reference an existing event.');
+      throw new Error("Booking eventId does not reference an existing event.");
     }
   }
 
   // Re-check normalized email shape before persisting.
   if (!EMAIL_PATTERN.test(this.email)) {
-    throw new Error('Email must be a valid address.');
+    throw new Error("Email must be a valid address.");
   }
 });
 
 bookingSchema.index({ eventId: 1 });
 
 export const Booking =
-  (models.Booking as Model<IBooking>) || model<IBooking>('Booking', bookingSchema);
+  (models.Booking as Model<IBooking>) ||
+  model<IBooking>("Booking", bookingSchema);
