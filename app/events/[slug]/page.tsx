@@ -61,7 +61,7 @@ const EventDetailsPage = async ({
   // cacheLife("hours");
 
   const { slug } = await params;
-  const request = await fetch(`${BASE_URL}/api/events/${slug}`);
+  const request = await fetch(`/api/events/${slug}`);
   // const {
   //   event: {
   //     description,
